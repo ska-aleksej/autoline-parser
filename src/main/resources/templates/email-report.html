@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчет о сканировании</title>
+    <style>
+        /* Сброс стилей и базовые настройки */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+         body {
+             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+             line-height: 1.6;
+             color: #2c3e50;
+             background: #f5f5f5;
+             padding: 20px;
+         }
+        
+         /* Основной контейнер */
+         .container {
+             max-width: 900px;
+             margin: 0 auto;
+             background: white;
+             border-radius: 10px;
+             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+             overflow: hidden;
+             border: 1px solid #e9ecef;
+         }
+        
+         /* Заголовок */
+         .header {
+             background: #667eea;
+             color: white;
+             text-align: center;
+             padding: 40px 30px;
+         }
+        
+        .header h1 {
+             font-size: 2.5rem;
+             font-weight: 700;
+             margin-bottom: 10px;
+         }
+         
+         .header p {
+             font-size: 1.1rem;
+             opacity: 0.9;
+         }
+        
+         /* Статистика */
+         .stats {
+             background: #f093fb;
+             color: white;
+             padding: 30px;
+             text-align: center;
+         }
+         
+         .stats p {
+             font-size: 1.2rem;
+             margin-bottom: 10px;
+         }
+         
+         .stats .number {
+             font-size: 3rem;
+             font-weight: 800;
+             display: block;
+             margin: 10px 0;
+         }
+        
+        /* Основной контент */
+        .content {
+            padding: 40px 30px;
+        }
+        
+        /* Сообщение об отсутствии компаний */
+         .empty-message {
+             text-align: center;
+             padding: 60px 20px;
+             color: #7f8c8d;
+             font-style: italic;
+             font-size: 1.1rem;
+             background: #f8f9fa;
+             border-radius: 10px;
+             margin: 20px 0;
+             border: 2px dashed #dee2e6;
+         }
+        
+        /* Заголовок списка компаний */
+        .content h2 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            padding-bottom: 15px;
+        }
+        
+        .content h2::after {
+             content: '';
+             position: absolute;
+             bottom: 0;
+             left: 50%;
+             transform: translateX(-50%);
+             width: 60px;
+             height: 3px;
+             background: #667eea;
+             border-radius: 2px;
+         }
+        
+        /* Список компаний */
+        .company-list {
+            display: grid;
+            gap: 25px;
+        }
+        
+         /* Карточка компании */
+         .company-card {
+             background: white;
+             border-radius: 10px;
+             padding: 25px;
+             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+             border: 1px solid #e9ecef;
+             margin-bottom: 20px;
+             border-left: 4px solid #667eea;
+         }
+        
+        /* Название компании */
+        .company-name {
+            color: #2c3e50;
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-left: 15px;
+            border-left: 3px solid #667eea;
+        }
+        
+         /* Ссылка на компанию */
+         .company-link {
+             display: inline-block;
+             color: #667eea;
+             text-decoration: none;
+             font-weight: 500;
+             padding: 8px 15px;
+             background: #f8f9fa;
+             border-radius: 5px;
+             margin-bottom: 20px;
+             border: 1px solid #dee2e6;
+         }
+        
+        /* Детали компании */
+         .company-details {
+             margin-top: 20px;
+         }
+        
+        .company-details p {
+             background: #f8f9fa;
+             padding: 12px 15px;
+             border-radius: 5px;
+             border: 1px solid #dee2e6;
+             font-size: 0.95rem;
+         }
+        
+        .company-details strong {
+            color: #495057;
+            font-weight: 600;
+        }
+        
+        .company-details span {
+            color: #667eea;
+            font-weight: 600;
+        }
+       
+        /* Дополнительные эффекты */
+        .stats .date {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+        
+        /* Иконки */
+        .icon {
+            display: inline-block;
+            margin-right: 8px;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Отчет о сканировании</h1>
+            <p>Результаты поиска новых компаний на autoline.info</p>
+        </div>
+        
+        <div class="stats">
+            <p>Найдено новых компаний: <span class="number" th:text="${companies.size()}">0</span></p>
+            <p class="date">Дата сканирования: <span th:text="${#dates.format(#dates.createNow(), 'dd.MM.yyyy HH:mm:ss')}">01.01.2024 12:00:00</span></p>
+        </div>
+        
+        <div class="content">
+            <div th:if="${companies.empty}">
+                <div class="empty-message">
+                    <p>Новых компаний не найдено.</p>
+                </div>
+            </div>
+
+            <div th:if="${not companies.empty}">
+                <h2>Список новых компаний</h2>
+                <div class="company-list">
+                    <div class="company-card" th:each="company : ${companies}">
+                        <h3 class="company-name" th:text="${company.name}">Название компании</h3>
+                        <a th:href="${company.link}" class="company-link" th:text="${company.link}">Ссылка на компанию</a>
+                        <div class="company-details">
+                            <p><span class="icon">📋</span><strong>Объявлений:</strong> <span th:text="${company.details.adsCount}">57</span></p>
+                            <p><span class="icon">🌐</span><strong>Лет на сайте:</strong> <span th:text="${company.details.yearsOnSite}">6</span></p>
+                            <p><span class="icon">💼</span><strong>Лет в продажах:</strong> <span th:text="${company.details.yearsOnMarket}">10</span></p>
+                            <p><span class="icon">📍</span><strong>Адрес:</strong> <span th:text="${company.details.address}">Москва</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
