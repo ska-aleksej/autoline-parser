@@ -16,7 +16,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -58,9 +57,6 @@ public class Parser {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-
-        allCompanies.sort(Comparator.comparing(Company::getName));
-        saveToFile(allCompanies, getFileName("report"));
 
         fillCompanyDetails(newOnes);
 

@@ -45,4 +45,12 @@ public class CompanyDetails {
     public void setYearsOnMarket(String yearsOnMarket) {
         this.yearsOnMarket = yearsOnMarket;
     }
+
+    public boolean hasChinaAddress() {
+        return address != null && address.contains("China");
+    }
+
+    public boolean notNewOnSite() {
+        return yearsOnSite != null && !yearsOnSite.equals("N/A");
+    }
 }

@@ -17,9 +17,11 @@ import java.util.List;
 
 @Service
 public class WebParserServiceImpl implements WebParserService {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(WebParserServiceImpl.class);
-    
+    private static final String ADDRESS_BLOCK_SELECTOR = "div.address.dealer-contact-row.with-bottom-margin";
+    private static final String ADDRESS_SELECTOR = "div.text";
+
     private final AppProperties appProperties;
     
     public WebParserServiceImpl(AppProperties appProperties) {
@@ -73,10 +75,10 @@ public class WebParserServiceImpl implements WebParserService {
                     .get();
 
             String address = "";
-            Element addressBlock = companyPage.selectFirst("div.address.dealer-contact-row");
+            Element addressBlock = companyPage.selectFirst(ADDRESS_BLOCK_SELECTOR);
 
             if (addressBlock != null) {
-                Element addressTextDiv = addressBlock.selectFirst("div.text");
+                Element addressTextDiv = addressBlock.selectFirst(ADDRESS_SELECTOR);
                 if (addressTextDiv != null) {
                     address = addressTextDiv.text().trim();
                 }
