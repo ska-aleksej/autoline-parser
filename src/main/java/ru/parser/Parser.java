@@ -11,12 +11,7 @@ import ru.parser.service.CompanyService;
 import ru.parser.service.MailService;
 import ru.parser.service.WebParserService;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 
@@ -49,8 +44,6 @@ public class Parser {
             throw new RuntimeException(e);
         }
 
-        saveToFile(newOnes, getFileName("report-new"));
-
         try {
             companyService.saveCompanies(newOnes);
             logger.info("Найденные записи сохранены в БД");
@@ -59,6 +52,8 @@ public class Parser {
         }
 
         fillCompanyDetails(newOnes);
+
+        newOnes.removeIf((c) -> c.getDetails().notNewOnSite());
 
         try {
             mailService.sendHtmlEmail(newOnes);
@@ -71,25 +66,5 @@ public class Parser {
 
     private void fillCompanyDetails(List<Company> newOnes) {
         newOnes.forEach(c -> c.setDetails(webParserService.getCompanyDetails(c.getLink())));
-    }
-
-    public static String getFileName(String prefix) {
-        String timestamp = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
-        return "./"+ prefix+ "-" + timestamp + ".txt";
-    }
-
-    // Метод для сохранения коллекции в файл
-    public static void saveToFile(List<Company> companies, String filename) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
-            for (Company company : companies) {
-                writer.write(company.getName());
-                writer.write("|");
-                writer.write(company.getLink());
-                writer.newLine();
-            }
-            logger.info("Данные успешно сохранены в файл: {}", filename);
-        } catch (IOException e) {
-            logger.error("Ошибка записи в файл", e);
-        }
     }
 }

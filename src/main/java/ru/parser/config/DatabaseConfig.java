@@ -1,6 +1,5 @@
 package ru.parser.config;
 
-import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -16,21 +15,6 @@ public class DatabaseConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseConfig.class);
 
-    @Bean
-    public DataSource dataSource(DatabaseProperties dbProps) {
-        logger.info("Creating DataSource with URL: {}", dbProps.getUrl());
-        
-        HikariDataSource dataSource = new HikariDataSource();
-        dataSource.setJdbcUrl(dbProps.getUrl());
-        dataSource.setUsername(dbProps.getUsername());
-        dataSource.setPassword(dbProps.getPassword());
-        dataSource.setDriverClassName(dbProps.getDriverClassName());
-        dataSource.setMaximumPoolSize(10);
-        dataSource.setConnectionTimeout(30000);
-        
-        logger.info("DataSource created successfully");
-        return dataSource;
-    }
 
     @Bean
     public DatabaseInitializer databaseInitializer(DataSource dataSource) {
