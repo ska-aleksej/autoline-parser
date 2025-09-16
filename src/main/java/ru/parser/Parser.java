@@ -57,7 +57,6 @@ public class Parser {
 
         try {
             mailService.sendHtmlEmail(newOnes);
-            logger.info("Письмо отправлено");
         } catch (MessagingException e) {
             logger.error("Ошибка отправки письма", e);
             throw new RuntimeException(e);
