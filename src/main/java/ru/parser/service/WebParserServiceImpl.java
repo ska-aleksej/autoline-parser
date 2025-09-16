@@ -30,8 +30,8 @@ public class WebParserServiceImpl implements WebParserService {
     
     @Override
     public List<Company> getAllCompanies() {
-        String baseURL = appProperties.getBaseUrl();
-        String path = appProperties.getCompaniesListUrl();
+        String baseURL = appProperties.getTargetBaseUrl();
+        String path = appProperties.getTargetCompaniesListUrl();
         
         Document companiesPage = getPageWithCompanies(baseURL + path);
         int pageCount = getPageCount(companiesPage);
@@ -51,8 +51,8 @@ public class WebParserServiceImpl implements WebParserService {
     
     @Override
     public List<Company> getCompaniesFromPage(int pageNumber) {
-        String baseURL = appProperties.getBaseUrl();
-        String path = appProperties.getCompaniesListUrl();
+        String baseURL = appProperties.getTargetBaseUrl();
+        String path = appProperties.getTargetCompaniesListUrl();
         
         String url = baseURL + path;
         if (pageNumber > 1) {
@@ -116,8 +116,8 @@ public class WebParserServiceImpl implements WebParserService {
     
     @Override
     public int getTotalPages() {
-        String baseURL = appProperties.getBaseUrl();
-        String path = appProperties.getCompaniesListUrl();
+        String baseURL = appProperties.getTargetBaseUrl();
+        String path = appProperties.getTargetCompaniesListUrl();
         
         Document companiesPage = getPageWithCompanies(baseURL + path);
         return getPageCount(companiesPage);
