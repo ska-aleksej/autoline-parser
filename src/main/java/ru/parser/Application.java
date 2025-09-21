@@ -15,7 +15,7 @@ public class Application {
     private static final Logger logger = LoggerFactory.getLogger(Application.class);
 
     public static void main(String[] args) {
-        logger.info("Запуск приложения");
+        logger.info("Запуск приложения!");
         SpringApplication app = new SpringApplication(Application.class);
         app.setWebApplicationType(WebApplicationType.NONE); // Отключаем web
         app.run(args);
