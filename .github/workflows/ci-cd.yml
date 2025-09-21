@@ -50,10 +50,10 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.yml"
+          target: "/opt/autoline"
           script: |
-            cp -f ./docker-compose.yml /opt/autoline/
-            cd /opt/autoline         
-            docker-compose down || true
+            cd /opt/autoline
             docker-compose pull
-            docker-compose up -d
+            docker-compose up -d --force-recreate
             docker image prune -f
