@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  app:
+    image: ghcr.io/ska-aleksej/autoline-parser:latest
+    container_name: autoline-parser
+    restart: unless-stopped
+    user: 1500:1500
+    environment:
+      - MAIL_LOGIN=${MAIL_LOGIN}
+      - MAIL_SENDER=${MAIL_SENDER}
+      - MAIL_TOKEN=${MAIL_TOKEN}
+    volumes:
+      - ./logs:/app/logs
+      - ./db:/app/db
+      - ./application.properties:/app/application.properties
