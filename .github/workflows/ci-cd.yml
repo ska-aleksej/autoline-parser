@@ -51,7 +51,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo cp -f ./docker-compose.yml /opt/autoline/
+            cp -f ./docker-compose.yml /opt/autoline/
             cd /opt/autoline         
             docker-compose down || true
             docker-compose pull
