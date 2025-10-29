@@ -1,7 +1,16 @@
 package ru.parser.service;
 
-import jakarta.mail.*;
-import jakarta.mail.internet.*;
+import jakarta.mail.Authenticator;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +20,8 @@ import org.thymeleaf.context.Context;
 import ru.parser.config.AppProperties;
 import ru.parser.model.Company;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Properties;
@@ -20,6 +30,8 @@ import java.util.Properties;
 public class MailServiceImpl implements MailService {
 
     private static final Logger logger = LoggerFactory.getLogger(MailServiceImpl.class);
+    private static final String DATE_FORMAT = "dd.MM.yyyy HH:mm:ss";
+
     @Value("${mail.token}")
     private String mailToken;
     @Value("${mail.username}")
@@ -47,16 +59,19 @@ public class MailServiceImpl implements MailService {
     public void sendHtmlEmail(List<Company> companies) throws MessagingException {
         Session session = createSession();
 
+        ZonedDateTime scanDate = ZonedDateTime.now(ZoneId.of("Europe/Minsk"));
+
         String subject = "Результаты сканирования " +
-                LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss"));
+                scanDate.format(DateTimeFormatter.ofPattern(DATE_FORMAT));
 
         // html контент
         Context context = new Context();
         context.setVariable("companies", companies);
+        context.setVariable("scanDate", scanDate);
         String htmlContent = templateEngine.process("email-report", context);
 
         // Текстовый контент
-        String textContent = generateTextContent(companies);
+        String textContent = generateTextContent(companies, scanDate);
 
         MimeMultipart multipart = createMultipartContent(textContent, htmlContent);
 
@@ -97,11 +112,13 @@ public class MailServiceImpl implements MailService {
         return multipart;
     }
 
-    private String generateTextContent(List<Company> companies) {
+    private String generateTextContent(List<Company> companies, ZonedDateTime scanDate) {
         StringBuilder sb = new StringBuilder();
         sb.append("ОТЧЕТ О СКАНИРОВАНИИ\n");
         sb.append("====================\n\n");
-        sb.append("Дата: ").append(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss"))).append("\n");
+        sb.append("Дата: ");
+        sb.append(scanDate.format(DateTimeFormatter.ofPattern(DATE_FORMAT)));
+        sb.append("\n");
         sb.append("Найдено новых компаний: ").append(companies.size()).append("\n\n");
         
         if (companies.isEmpty()) {
