@@ -2,16 +2,18 @@ package ru.parser.service;
 
 import ru.parser.model.Company;
 import ru.parser.model.CompanyDetails;
+import ru.parser.model.ScanType;
 
 import java.util.List;
 
 public interface WebParserService {
     
     /**
-     * Получает список всех компаний со всех страниц
+     * Получает список всех компаний со всех страниц в соответствии с указанным типом сканирования
+     * @param scanType тип сканирования (полное или только китайские компании)
      * @return список всех найденных компаний
      */
-    List<Company> getAllCompanies();
+    List<Company> getAllCompaniesByType(ScanType scanType);
     
     /**
      * Получает список компаний с конкретной страницы
