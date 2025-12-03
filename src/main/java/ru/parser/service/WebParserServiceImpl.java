@@ -15,7 +15,6 @@ import ru.parser.model.ScanType;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class WebParserServiceImpl implements WebParserService {
@@ -42,7 +41,9 @@ public class WebParserServiceImpl implements WebParserService {
         
         logger.info("Обрабатываем {} страниц с компаниями", pageCount);
 
-        String filterWithPage = filter.isBlank() ? "?" : (filter + "&") + "page=";
+        String filterWithPage = filter.isBlank()
+                ? "?page="
+                : filter + "&page=";
 
         for (int page = 2; page <= pageCount; page++) {
             companiesPage = getPageWithCompanies(baseURL + path + filterWithPage + page);
