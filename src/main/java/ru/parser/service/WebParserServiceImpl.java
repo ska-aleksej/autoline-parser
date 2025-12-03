@@ -10,10 +10,12 @@ import org.springframework.stereotype.Service;
 import ru.parser.config.AppProperties;
 import ru.parser.model.Company;
 import ru.parser.model.CompanyDetails;
+import ru.parser.model.ScanType;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class WebParserServiceImpl implements WebParserService {
@@ -29,18 +31,21 @@ public class WebParserServiceImpl implements WebParserService {
     }
     
     @Override
-    public List<Company> getAllCompanies() {
+    public List<Company> getAllCompaniesByType(ScanType scanType) {
         String baseURL = appProperties.getTargetBaseUrl();
         String path = appProperties.getTargetCompaniesListUrl();
+        String filter = scanType.getUrlFilter().isBlank() ? "" : "?" + scanType.getUrlFilter();
         
-        Document companiesPage = getPageWithCompanies(baseURL + path);
+        Document companiesPage = getPageWithCompanies(baseURL + path + filter);
         int pageCount = getPageCount(companiesPage);
         List<Company> allCompanies = new LinkedList<>(extractCompanies(companiesPage));
         
         logger.info("Обрабатываем {} страниц с компаниями", pageCount);
 
+        String filterWithPage = filter.isBlank() ? "?" : (filter + "&") + "page=";
+
         for (int page = 2; page <= pageCount; page++) {
-            companiesPage = getPageWithCompanies(baseURL + path + "?page=" + page);
+            companiesPage = getPageWithCompanies(baseURL + path + filterWithPage + page);
             List<Company> pageCompanies = extractCompanies(companiesPage);
             allCompanies.addAll(pageCompanies);
         }

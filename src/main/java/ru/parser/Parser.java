@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.parser.model.Company;
+import ru.parser.model.ScanType;
 import ru.parser.service.CompanyService;
 import ru.parser.service.MailService;
 import ru.parser.service.WebParserService;
@@ -33,8 +34,8 @@ public class Parser {
         this.webParserService = webParserService;
     }
 
-    public void parse() {
-        List<Company> allCompanies = webParserService.getAllCompanies();
+    public void parse(ScanType scanType) {
+        List<Company> allCompanies = webParserService.getAllCompaniesByType(scanType);
 
         List<Company> newOnes;
         try {
@@ -55,11 +56,13 @@ public class Parser {
 
         newOnes.removeIf((c) -> c.getDetails().notNewOnSite());
 
-        try {
-            mailService.sendHtmlEmail(newOnes);
-        } catch (MessagingException e) {
-            logger.error("Ошибка отправки письма", e);
-            throw new RuntimeException(e);
+        if (scanType == ScanType.FULL || !newOnes.isEmpty()) {
+            try {
+                mailService.sendHtmlEmail(newOnes);
+            } catch (MessagingException e) {
+                logger.error("Ошибка отправки письма", e);
+                throw new RuntimeException(e);
+            }
         }
     }
 
