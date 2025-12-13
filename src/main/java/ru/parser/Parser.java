@@ -10,6 +10,7 @@ import ru.parser.model.Company;
 import ru.parser.model.ScanType;
 import ru.parser.service.CompanyService;
 import ru.parser.service.MailService;
+import ru.parser.service.TelegramBotService;
 import ru.parser.service.WebParserService;
 
 import java.sql.SQLException;
@@ -22,16 +23,19 @@ public class Parser {
     private final MailService mailService;
     private final CompanyService companyService;
     private final WebParserService webParserService;
+    private final TelegramBotService telegramBotService;
 
     @Autowired
     public Parser(
             CompanyService companyService,
             MailService mailService,
-            WebParserService webParserService
+            WebParserService webParserService,
+            TelegramBotService telegramBotService
     ) {
         this.companyService = companyService;
         this.mailService = mailService;
         this.webParserService = webParserService;
+        this.telegramBotService = telegramBotService;
     }
 
     public void parse(ScanType scanType) {
@@ -59,6 +63,7 @@ public class Parser {
         if (scanType == ScanType.FULL || !newOnes.isEmpty()) {
             try {
                 mailService.sendHtmlEmail(newOnes);
+                telegramBotService.sendReport(newOnes);
             } catch (MessagingException e) {
                 logger.error("Ошибка отправки письма", e);
                 throw new RuntimeException(e);
