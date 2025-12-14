@@ -8,6 +8,9 @@ services:
       - MAIL_LOGIN=${MAIL_LOGIN}
       - MAIL_SENDER=${MAIL_SENDER}
       - MAIL_TOKEN=${MAIL_TOKEN}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_ADMIN_ID=${TELEGRAM_ADMIN_ID}
+      - TELEGRAM_ALLOWED_IDS=${TELEGRAM_ALLOWED_IDS}
     volumes:
       - ./logs:/app/logs
       - ./db:/app/db

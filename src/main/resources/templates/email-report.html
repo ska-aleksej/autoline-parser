@@ -132,28 +132,6 @@
             border: 2px solid #dc3545;
             border-left-color: #dc3545;
         }
-        .company-card.less-visible {
-            background: #f8f9fa;
-            border-color: #e9ecef;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-            color: #6c757d;
-        }
-        .company-card.less-visible .company-name {
-            color: #6c757d;
-            border-left-color: #ced4da;
-        }
-        .company-card.less-visible .company-link {
-            color: #7b88d6;
-            background: #f1f3f5;
-            border-color: #e9ecef;
-        }
-        .company-card.less-visible .company-details p {
-            background: #f9fafb;
-            border-color: #eceff1;
-        }
-        .company-card.less-visible .company-details span {
-            color: #7b88d6;
-        }
         
         /* Название компании */
         .company-name {
@@ -242,7 +220,7 @@
             <div th:if="${not companies.empty}">
                 <h2>Список новых компаний</h2>
                 <div class="company-list">
-                    <div class="company-card" th:each="company : ${companies}" th:classappend="${(company.details.hasChinaAddress() ? ' alert-china' : '') + (company.details.notNewOnSite() ? ' less-visible' : '')}">
+                    <div class="company-card" th:each="company : ${companies}" th:classappend="${company.details.hasChinaAddress() ? ' alert-china' : ''}">
                         <h3 class="company-name" th:text="${company.name}">Название компании</h3>
                         <a th:href="${company.link}" class="company-link" th:text="${company.link}">Ссылка на компанию</a>
                         <div class="company-details">
