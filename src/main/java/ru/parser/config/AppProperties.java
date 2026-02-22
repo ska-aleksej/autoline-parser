@@ -13,6 +13,7 @@ public class AppProperties {
     private List<String> emails = new ArrayList<>();
     private String targetBaseUrl;
     private String targetCompaniesPath;
+    private boolean mailSendEnabled = false;
 
     public String getTargetBaseUrl() {
         return targetBaseUrl;
@@ -40,5 +41,13 @@ public class AppProperties {
 
     public void setEmails(List<String> mails) {
         this.emails = mails;
+    }
+
+    public boolean isMailSendEnabled() {
+        return mailSendEnabled;
+    }
+
+    public void setMailSendEnabled(boolean mailSendEnabled) {
+        this.mailSendEnabled = mailSendEnabled;
     }
 }

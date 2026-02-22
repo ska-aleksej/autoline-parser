@@ -57,6 +57,11 @@ public class MailServiceImpl implements MailService {
 
     @Override
     public void sendHtmlEmail(List<Company> companies) throws MessagingException {
+        if (!appProperties.isMailSendEnabled()) {
+            logger.info("Email отправка отключена (app.mail-send-enabled=false)");
+            return;
+        }
+        
         Session session = createSession();
 
         ZonedDateTime scanDate = ZonedDateTime.now(ZoneId.of("Europe/Minsk"));
