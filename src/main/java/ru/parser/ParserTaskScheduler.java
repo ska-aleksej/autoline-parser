@@ -27,7 +27,7 @@ public class ParserTaskScheduler {
         }
     }
 
-    @Scheduled(cron = "0 50 * * * ?", zone = "Europe/Minsk")
+    @Scheduled(cron = "0 5,20,35,50 * * * ?", zone = "Europe/Minsk")
     public void startScanChinese() {
         try {
             logger.info("Запуск сканирования компаний из Китая");
