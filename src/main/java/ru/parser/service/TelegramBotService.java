@@ -17,7 +17,13 @@ import ru.parser.telegram.TelegramBotConstants;
 import ru.parser.telegram.TelegramBotMessages;
 import ru.parser.telegram.TelegramMessageFormatter;
 
+import okhttp3.Credentials;
+import okhttp3.OkHttpClient;
+
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class TelegramBotService implements SpringLongPollingBot, LongPollingSingleThreadUpdateConsumer {
@@ -29,8 +35,37 @@ public class TelegramBotService implements SpringLongPollingBot, LongPollingSing
 
     public TelegramBotService(TelegramBotProperties telegramBotProperties) {
         this.telegramBotProperties = telegramBotProperties;
-        this.telegramClient = new OkHttpTelegramClient(getBotToken());
+        this.telegramClient = createTelegramClient();
         greet();
+    }
+
+    private TelegramClient createTelegramClient() {
+        OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS);
+
+        TelegramBotProperties.Proxy proxyConfig = telegramBotProperties.getProxy();
+        if (proxyConfig.isEnabled() && proxyConfig.getHost() != null && !proxyConfig.getHost().isEmpty()) {
+            Proxy proxy = new Proxy(Proxy.Type.SOCKS,
+                    new InetSocketAddress(proxyConfig.getHost(), proxyConfig.getPort()));
+            clientBuilder.proxy(proxy);
+
+            if (proxyConfig.getUsername() != null && !proxyConfig.getUsername().isEmpty()) {
+                clientBuilder.proxyAuthenticator((route, response) -> {
+                    String credential = Credentials.basic(proxyConfig.getUsername(), proxyConfig.getPassword());
+                    return response.request().newBuilder()
+                            .header("Proxy-Authorization", credential)
+                            .build();
+                });
+            }
+
+            logger.info("Telegram bot SOCKS5 proxy enabled: {}:{}", proxyConfig.getHost(), proxyConfig.getPort());
+        } else {
+            logger.info("Telegram bot proxy disabled");
+        }
+
+        return new OkHttpTelegramClient(clientBuilder.build(), getBotToken());
     }
 
     @Override
