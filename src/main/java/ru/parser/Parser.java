@@ -4,7 +4,6 @@ import jakarta.mail.MessagingException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.parser.model.Company;
 import ru.parser.model.ScanType;
@@ -13,8 +12,8 @@ import ru.parser.service.MailService;
 import ru.parser.service.TelegramBotService;
 import ru.parser.service.WebParserService;
 
-import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 
 @Component
@@ -25,35 +24,35 @@ public class Parser {
     private final WebParserService webParserService;
     private final TelegramBotService telegramBotService;
 
-    @Autowired
     public Parser(
             CompanyService companyService,
             MailService mailService,
             WebParserService webParserService,
-            TelegramBotService telegramBotService
+            Optional<TelegramBotService> telegramBotService
     ) {
         this.companyService = companyService;
         this.mailService = mailService;
         this.webParserService = webParserService;
-        this.telegramBotService = telegramBotService;
+        this.telegramBotService = telegramBotService.orElse(null);
     }
 
     public void parse(ScanType scanType) {
-        List<Company> allCompanies = webParserService.getAllCompaniesByType(scanType);
+        boolean baseline = companyService.isEmpty();
 
-        List<Company> newOnes;
-        try {
-            newOnes = companyService.findNewCompanies(allCompanies);
-        } catch (SQLException e) {
-            logger.error("Ошибка получения новых записей", e);
-            throw new RuntimeException(e);
+        if (baseline && scanType != ScanType.FULL) {
+            logger.info("БД пуста: сканирование {} пропущено, базовое наполнение выполнит FULL-скан", scanType);
+            return;
         }
 
-        try {
-            companyService.saveCompanies(newOnes);
-            logger.info("Найденные записи сохранены в БД");
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        List<Company> allCompanies = webParserService.getAllCompaniesByType(scanType);
+        List<Company> newOnes = companyService.findNewCompanies(allCompanies);
+
+        companyService.saveCompanies(newOnes);
+        logger.info("Найденные записи сохранены в БД");
+
+        if (baseline) {
+            logger.info("Первый запуск: {} компаний сохранены как базовое наполнение, без уведомлений", newOnes.size());
+            return;
         }
 
         fillCompanyDetails(newOnes);
@@ -63,7 +62,9 @@ public class Parser {
         if (scanType == ScanType.FULL || !newOnes.isEmpty()) {
             try {
                 mailService.sendHtmlEmail(newOnes);
-                telegramBotService.sendReport(newOnes);
+                if (telegramBotService != null) {
+                    telegramBotService.sendReport(newOnes);
+                }
             } catch (MessagingException e) {
                 logger.error("Ошибка отправки письма", e);
                 throw new RuntimeException(e);
