@@ -22,7 +22,9 @@ public class WebParserServiceImpl implements WebParserService {
     private static final Logger logger = LoggerFactory.getLogger(WebParserServiceImpl.class);
     private static final String ADDRESS_BLOCK_SELECTOR = "div.address.dealer-contact-row.with-bottom-margin";
     private static final String ADDRESS_SELECTOR = "div.text";
-    private static final long PAGE_FETCH_DELAY_MS = 1000;
+    private static final long PAGE_FETCH_DELAY_MS = 2000;
+    private static final int MAX_PAGE_ATTEMPTS = 6;
+    private static final long[] RETRY_DELAY_SECONDS = {20, 40, 80, 160, 320};
 
     private final AppProperties appProperties;
     
@@ -166,8 +168,12 @@ public class WebParserServiceImpl implements WebParserService {
     }
 
     private void pauseBetweenRequests() {
+        sleep(PAGE_FETCH_DELAY_MS);
+    }
+
+    private void sleep(long millis) {
         try {
-            Thread.sleep(PAGE_FETCH_DELAY_MS);
+            Thread.sleep(millis);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Прервано во время паузы между запросами", e);
@@ -176,18 +182,28 @@ public class WebParserServiceImpl implements WebParserService {
 
     private Document getPageWithCompanies(String url) {
         logger.debug("Загружаем страницу с компаниями {}", url);
-        Document document;
-        try {
-            document = Jsoup.connect(url)
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-                    .timeout(10000)
-                    .get();
-        } catch (IOException e) {
-            logger.error("Ошибка загрузки страницы", e);
-            throw new RuntimeException(e);
+        IOException lastError = null;
+
+        for (int attempt = 1; attempt <= MAX_PAGE_ATTEMPTS; attempt++) {
+            if (attempt > 1) {
+                long delaySeconds = RETRY_DELAY_SECONDS[attempt - 2];
+                logger.warn("Повторная загрузка через {}с (попытка {}/{})", delaySeconds, attempt, MAX_PAGE_ATTEMPTS);
+                sleep(delaySeconds * 1000L);
+            }
+            try {
+                Document document = Jsoup.connect(url)
+                        .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                        .timeout(10000)
+                        .get();
+                logger.trace("Загружена страница с компаниями");
+                return document;
+            } catch (IOException e) {
+                lastError = e;
+                logger.error("Ошибка загрузки страницы (попытка {}/{}): {}", attempt, MAX_PAGE_ATTEMPTS, url, e);
+            }
         }
-        logger.trace("Загружена страница с компаниями");
-        return document;
+
+        throw new RuntimeException("Страница не загрузилась после " + MAX_PAGE_ATTEMPTS + " попыток: " + url, lastError);
     }
 } 
