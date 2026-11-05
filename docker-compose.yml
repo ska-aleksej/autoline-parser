@@ -3,7 +3,13 @@ services:
     image: ghcr.io/ska-aleksej/autoline-parser:latest
     container_name: autoline-parser
     restart: unless-stopped
-    user: 1500:1500
+    networks:
+      - shared
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       - MAIL_LOGIN=${MAIL_LOGIN}
       - MAIL_SENDER=${MAIL_SENDER}
@@ -11,7 +17,14 @@ services:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_ADMIN_ID=${TELEGRAM_ADMIN_ID}
       - TELEGRAM_ALLOWED_IDS=${TELEGRAM_ALLOWED_IDS}
-    volumes:
-      - ./logs:/app/logs
-      - ./db:/app/db
-      - ./application.properties:/app/application.properties
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=autoline
+      - DB_APP_USER=autoline_app
+      - DB_MIG_USER=autoline_mig
+      - DB_APP_PASSWORD=${AUTOLINE_APP_PASSWORD}
+      - DB_MIG_PASSWORD=${AUTOLINE_MIG_PASSWORD}
+
+networks:
+  shared:
+    external: true

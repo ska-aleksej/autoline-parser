@@ -17,10 +17,17 @@ public class CompanyServiceImpl implements CompanyService {
     private static final Logger logger = LoggerFactory.getLogger(CompanyServiceImpl.class);
     private static final String INSERT_COMPANIES_SQL = "INSERT INTO companies (name, link) VALUES (?, ?)";
     private static final String SELECT_ALL_COMPANIES_SQL = "SELECT name, link FROM companies";
+    private static final String EXISTS_COMPANIES_SQL = "SELECT EXISTS(SELECT 1 FROM companies)";
     private final JdbcTemplate jdbcTemplate;
 
     public CompanyServiceImpl(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        Boolean exists = jdbcTemplate.queryForObject(EXISTS_COMPANIES_SQL, Boolean.class);
+        return !Boolean.TRUE.equals(exists);
     }
 
     @Override
@@ -52,10 +59,14 @@ public class CompanyServiceImpl implements CompanyService {
             savedLinks.add(company.getLink()); // Считаем, что link - уникальный идентификатор
         }
 
+        Set<String> uniqueParsedLinks = new HashSet<>();
         for (Company company : parsedCompanies) {
-            if (!savedLinks.contains(company.getLink())) {
-                result.add(company);
+            String link = company.getLink();
+            // одна компания может встретиться на нескольких страницах (премиум, сдвиг списка)
+            if (savedLinks.contains(link) || !uniqueParsedLinks.add(link)) {
+                continue;
             }
+            result.add(company);
         }
 
         return result;

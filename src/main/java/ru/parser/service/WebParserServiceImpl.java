@@ -22,6 +22,7 @@ public class WebParserServiceImpl implements WebParserService {
     private static final Logger logger = LoggerFactory.getLogger(WebParserServiceImpl.class);
     private static final String ADDRESS_BLOCK_SELECTOR = "div.address.dealer-contact-row.with-bottom-margin";
     private static final String ADDRESS_SELECTOR = "div.text";
+    private static final long PAGE_FETCH_DELAY_MS = 1000;
 
     private final AppProperties appProperties;
     
@@ -46,6 +47,7 @@ public class WebParserServiceImpl implements WebParserService {
                 : filter + "&page=";
 
         for (int page = 2; page <= pageCount; page++) {
+            pauseBetweenRequests();
             companiesPage = getPageWithCompanies(baseURL + path + filterWithPage + page);
             List<Company> pageCompanies = extractCompanies(companiesPage);
             allCompanies.addAll(pageCompanies);
@@ -160,6 +162,15 @@ public class WebParserServiceImpl implements WebParserService {
         } else {
             logger.error("Элемент последней страницы не найден.");
             throw new RuntimeException("Элемент последней страницы не найден.");
+        }
+    }
+
+    private void pauseBetweenRequests() {
+        try {
+            Thread.sleep(PAGE_FETCH_DELAY_MS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Прервано во время паузы между запросами", e);
         }
     }
 
