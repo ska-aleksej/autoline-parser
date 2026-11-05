@@ -31,7 +31,7 @@ Spring Boot (без web), PostgreSQL из проекта `infra-postgres`, Flywa
 | Переменная | По умолчанию | Описание |
 |---|---|---|
 | `APP_SCHEDULER_ENABLED` | `true` | выключить расписания сканирований |
-| `APP_STARTUP_SCAN_ENABLED` | `false` | выполнить один FULL-скан сразу при старте (для локальной проверки) |
+| `APP_STARTUP_SCAN_ENABLED` | `false` | выполнить один FULL-скан сразу при старте; прокидывается в контейнер через compose (на проде — та же переменная в `/opt/autoline/.env`) |
 
 ## Локальный запуск
 
