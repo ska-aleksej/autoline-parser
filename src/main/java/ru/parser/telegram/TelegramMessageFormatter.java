@@ -125,7 +125,7 @@ public final class TelegramMessageFormatter {
      * Вспомогательный метод для добавления детальной информации
      */
     private static void appendDetailIfExists(StringBuilder builder, String label, String value) {
-        if (value != null) {
+        if (value != null && !"N/A".equals(value)) {
             builder.append(label).append(escapeMarkdown(value)).append("\n");
         }
     }
