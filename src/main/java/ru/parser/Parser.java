@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import ru.parser.model.Company;
+import ru.parser.model.CompanyDetails;
 import ru.parser.model.ScanType;
 import ru.parser.service.CompanyService;
 import ru.parser.service.MailService;
@@ -19,6 +20,7 @@ import java.util.Optional;
 @Component
 public class Parser {
     private static final Logger logger = LoggerFactory.getLogger(Parser.class);
+    private static final int MAX_CONSECUTIVE_DETAIL_FAILURES = 3;
     private final MailService mailService;
     private final CompanyService companyService;
     private final WebParserService webParserService;
@@ -73,6 +75,37 @@ public class Parser {
     }
 
     private void fillCompanyDetails(List<Company> newOnes) {
-        newOnes.forEach(c -> c.setDetails(webParserService.getCompanyDetails(c.getLink())));
+        int failed = 0;
+        int consecutiveFailures = 0;
+
+        for (Company company : newOnes) {
+            try {
+                company.setDetails(webParserService.getCompanyDetails(company.getLink()));
+                consecutiveFailures = 0;
+            } catch (Exception e) {
+                failed++;
+                consecutiveFailures++;
+                logger.error("Не удалось получить детали компании {}, компания останется в отчете без деталей",
+                        company.getLink(), e);
+                if (consecutiveFailures >= MAX_CONSECUTIVE_DETAIL_FAILURES) {
+                    logger.warn("Детали не получены для {} компаний подряд — сайт недоступен или заблокировал запросы, " +
+                            "пропускаем загрузку деталей для остальных компаний", consecutiveFailures);
+                    break;
+                }
+            }
+        }
+
+        if (failed > 0) {
+            logger.warn("Детали не получены для {} из {} новых компаний", failed, newOnes.size());
+            fillMissingDetailsWithFallback(newOnes);
+        }
+    }
+
+    private void fillMissingDetailsWithFallback(List<Company> newOnes) {
+        for (Company company : newOnes) {
+            if (company.getDetails() == null) {
+                company.setDetails(new CompanyDetails("N/A", "N/A", "N/A", null));
+            }
+        }
     }
 }

@@ -23,7 +23,7 @@ public class WebParserServiceImpl implements WebParserService {
     private static final String ADDRESS_BLOCK_SELECTOR = "div.address.dealer-contact-row.with-bottom-margin";
     private static final String ADDRESS_SELECTOR = "div.text";
     private static final long PAGE_FETCH_DELAY_MS = 2000;
-    private static final int MAX_PAGE_ATTEMPTS = 6;
+    private static final int MAX_FETCH_ATTEMPTS = 6;
     private static final long[] RETRY_DELAY_SECONDS = {20, 40, 80, 160, 320};
 
     private final AppProperties appProperties;
@@ -76,52 +76,43 @@ public class WebParserServiceImpl implements WebParserService {
     @Override
     public CompanyDetails getCompanyDetails(String companyLink) {
         logger.debug("Получаем детали компании: {}", companyLink);
-        
-        try {
-            Document companyPage = Jsoup.connect(companyLink)
-                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-                    .timeout(10000)
-                    .get();
+        pauseBetweenRequests();
 
-            String address = "";
-            Element addressBlock = companyPage.selectFirst(ADDRESS_BLOCK_SELECTOR);
+        Document companyPage = fetchDocument(companyLink);
 
-            if (addressBlock != null) {
-                Element addressTextDiv = addressBlock.selectFirst(ADDRESS_SELECTOR);
-                if (addressTextDiv != null) {
-                    address = addressTextDiv.text().trim();
-                }
+        String address = "";
+        Element addressBlock = companyPage.selectFirst(ADDRESS_BLOCK_SELECTOR);
+
+        if (addressBlock != null) {
+            Element addressTextDiv = addressBlock.selectFirst(ADDRESS_SELECTOR);
+            if (addressTextDiv != null) {
+                address = addressTextDiv.text().trim();
             }
-
-            String adsCount = "N/A";
-            String yearsOnSite = "N/A";
-            String yearsOnMarket = "N/A";
-            Element infoBlock = companyPage.selectFirst("div.dealer-main-info");
-            if (infoBlock != null) {
-                Element adsElement = infoBlock.selectFirst("span.number-of-ads");
-                if (adsElement != null) {
-                    adsCount = adsElement.text().trim();
-                }
-
-                Element yearsOnSiteElement = infoBlock.selectFirst("div.years-on-site-container strong");
-                if (yearsOnSiteElement != null) {
-                    yearsOnSite = yearsOnSiteElement.text().trim();
-                }
-
-
-                Element yearsOnMarketElement = infoBlock.selectFirst("div.years-on-market-container strong");
-                if (yearsOnMarketElement != null) {
-                    yearsOnMarket = yearsOnMarketElement.text().trim();
-                }
-            }
-
-            return new CompanyDetails(adsCount, yearsOnSite, yearsOnMarket, address);
-            
-        } catch (IOException e) {
-            logger.error("Ошибка при получении деталей компании: {}", companyLink, e);
-            throw new RuntimeException("Не удалось получить детали компании", e);
         }
+
+        String adsCount = "N/A";
+        String yearsOnSite = "N/A";
+        String yearsOnMarket = "N/A";
+        Element infoBlock = companyPage.selectFirst("div.dealer-main-info");
+        if (infoBlock != null) {
+            Element adsElement = infoBlock.selectFirst("span.number-of-ads");
+            if (adsElement != null) {
+                adsCount = adsElement.text().trim();
+            }
+
+            Element yearsOnSiteElement = infoBlock.selectFirst("div.years-on-site-container strong");
+            if (yearsOnSiteElement != null) {
+                yearsOnSite = yearsOnSiteElement.text().trim();
+            }
+
+
+            Element yearsOnMarketElement = infoBlock.selectFirst("div.years-on-market-container strong");
+            if (yearsOnMarketElement != null) {
+                yearsOnMarket = yearsOnMarketElement.text().trim();
+            }
+        }
+
+        return new CompanyDetails(adsCount, yearsOnSite, yearsOnMarket, address);
     }
     
     @Override
@@ -182,28 +173,30 @@ public class WebParserServiceImpl implements WebParserService {
 
     private Document getPageWithCompanies(String url) {
         logger.debug("Загружаем страницу с компаниями {}", url);
+        return fetchDocument(url);
+    }
+
+    private Document fetchDocument(String url) {
         IOException lastError = null;
 
-        for (int attempt = 1; attempt <= MAX_PAGE_ATTEMPTS; attempt++) {
+        for (int attempt = 1; attempt <= MAX_FETCH_ATTEMPTS; attempt++) {
             if (attempt > 1) {
                 long delaySeconds = RETRY_DELAY_SECONDS[attempt - 2];
-                logger.warn("Повторная загрузка через {}с (попытка {}/{})", delaySeconds, attempt, MAX_PAGE_ATTEMPTS);
+                logger.warn("Повторная загрузка через {}с (попытка {}/{})", delaySeconds, attempt, MAX_FETCH_ATTEMPTS);
                 sleep(delaySeconds * 1000L);
             }
             try {
-                Document document = Jsoup.connect(url)
+                return Jsoup.connect(url)
                         .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
                         .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
                         .timeout(10000)
                         .get();
-                logger.trace("Загружена страница с компаниями");
-                return document;
             } catch (IOException e) {
                 lastError = e;
-                logger.error("Ошибка загрузки страницы (попытка {}/{}): {}", attempt, MAX_PAGE_ATTEMPTS, url, e);
+                logger.error("Ошибка загрузки страницы (попытка {}/{}): {}", attempt, MAX_FETCH_ATTEMPTS, url, e);
             }
         }
 
-        throw new RuntimeException("Страница не загрузилась после " + MAX_PAGE_ATTEMPTS + " попыток: " + url, lastError);
+        throw new RuntimeException("Страница не загрузилась после " + MAX_FETCH_ATTEMPTS + " попыток: " + url, lastError);
     }
 } 
